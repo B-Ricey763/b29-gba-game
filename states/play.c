@@ -1,6 +1,9 @@
 #include "play.h"
 #include <stdio.h>
 
+/*
+  Clamp a number between min and max
+*/
 int clamp(int num, int min, int max) {
   if (num < min) {
     return min;
@@ -11,6 +14,11 @@ int clamp(int num, int min, int max) {
   }
 }
 
+/*
+  Initial background draw, also resets state.
+  This is not strictly necessary since DRAW_STARTSCREEN also resets it, but in
+  case you ever go straight from the restart screen to this, its good to go
+*/
 enum gba_state draw_bg(struct game_data *game) {
   // reset state
   game->title_text_pos = -10;
@@ -35,6 +43,10 @@ enum gba_state draw_bg(struct game_data *game) {
   return PLAY;
 }
 
+/*
+  Contains the main game logic (and calls to the functions that affect it)
+  The physics is jank, but hey, it works
+*/
 enum gba_state play(struct game_data *game) {
   // save these locally to (hopefully) save on perf
   int x_vel = game->x_vel;
@@ -70,9 +82,9 @@ enum gba_state play(struct game_data *game) {
   // calcualte x_vel based on a bunch of factors
   // when you pitch up, you will slow down, when down, speed up
   x_vel = clamp(x_vel + delta_throttle * 2 - delta_pitch - DRAG, 0, MAX_SPEED);
-  // divided by half to get [0, 2] then shift back to get [-1, 1]
+  // Gives you a value from [0, 4]
   int x_vel_contrib = x_vel / (MAX_SPEED / 4);
-  // gives you a pitch from -2 to 2
+  // gives you a pitch from -3 to 3
   int pitch_contrib = delta_pitch * 3;
   // This calc gives you decent game feel given the situation
   y_vel = GRAVITY - x_vel_contrib - pitch_contrib;
@@ -85,7 +97,7 @@ enum gba_state play(struct game_data *game) {
 
   // Visual only
   int col = clamp((x_vel - MAX_SPEED / 50), 70, 170);
-  // only an issue till it is!
+  // shouldn't use this much DMA, but it works!
   drawRectDMA(game->prev_row, game->prev_col, b29_width, b29_height, SKY_BLUE);
   // actually draw the plane
   drawImageDMA(game->altitude, col, b29_width, b29_height, b29_to_draw);
@@ -111,19 +123,26 @@ enum gba_state play(struct game_data *game) {
   return check_loss(game);
 }
 
+/*
+  Despite the name, checks all sorts of win/loss conditions.
+*/
 enum gba_state check_loss(struct game_data *game) {
   int target_dist = DIST_TO_TARGET(game->distance);
   int bomb_cutoff = HEIGHT - GROUND_HEIGHT - V2SITE_HEIGHT / 2;
+  // check for different win/lose conditions
   if (game->altitude >= HEIGHT - GROUND_HEIGHT - SIDE_B29_HEIGHT &&
-      game->distance > WIDTH * 15) {
+      game->distance > WIDTH * 20) {
+    // you spent too much time on the ground before leaving the runway, so loss
     return DRAW_LOSESCREEN;
   } else if (game->bomb_dropped == 1 && game->bomb_alt >= bomb_cutoff &&
              game->bomb_prev_col > target_dist &&
              game->bomb_prev_col < target_dist + V2SITE_WIDTH) {
+    // BOMB was successfully dropped
     draw_explosion(game->bomb_prev_row, game->bomb_prev_col);
     return DRAW_WINSCREEN;
   } else if ((game->bomb_dropped == 1 && game->bomb_alt >= bomb_cutoff) ||
              (target_dist < -WIDTH)) {
+    // Bomb was dropped, but didn't hit the target
     draw_explosion(game->bomb_prev_row, game->bomb_prev_col);
     return DRAW_FAILEDSCREEN;
   }
@@ -150,12 +169,19 @@ void draw_ground(int raw_dist) {
   int distance = DISP_DIST(raw_dist);
   int row = HEIGHT - GROUND_HEIGHT;
   if (distance < WIDTH) {
+    // The runway moves back relative to screen as player 'moves' forward
     drawPartialLeftImage(row, 0, distance, RUNWAY_WIDTH, RUNWAY_HEIGHT, runway);
+    // as that happens, the normal ground creeps in to make the transition
+    // seamless
     int offset = RUNWAY_WIDTH - distance;
     drawPartialRightImage(row, offset - 1, GROUND_WIDTH, GROUND_HEIGHT, ground);
+    // return early for perf
     return;
   }
-  // this is some narly math to get the site to draw, but by god it works!
+  // this is some gnarly math to get the site to draw, but by god it works!
+  // the idea is three stages: first it is off the screen to the right, then its
+  // on the screen, and then its off the screen to the left, each using their
+  // respective function
   int target_dist = DIST_TO_TARGET(raw_dist);
   int v2Row = HEIGHT - GROUND_HEIGHT - V2SITE_HEIGHT;
   if (target_dist < WIDTH && target_dist > WIDTH - V2SITE_WIDTH) {
@@ -168,9 +194,16 @@ void draw_ground(int raw_dist) {
                          v2site);
   }
 
+  // Once the the runway is gone, we can just loop the image normally based off
+  // distance to give the illusion of traveling. Since dist is based off speed,
+  // the ground movement varies based off how fast you go.
   drawLoopingImage(distance, GROUND_WIDTH, GROUND_HEIGHT, ground);
 }
 
+/*
+  Despite the name (again), this handles both bomb drawing and the handling of
+  the velocity in x and y
+*/
 void draw_bomb(struct game_data *game) {
   if (game->bomb_dropped) {
     drawRectDMA(game->bomb_prev_row, game->bomb_prev_col, BOMB_WIDTH,

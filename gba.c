@@ -53,20 +53,6 @@ void drawRectDMA(int row, int col, int width, int height, volatile u16 color) {
 }
 
 /*
-  Uses magenta as the transparency color
-*/
-void drawSprite(int row, int col, int width, int height, const u16 *image) {
-  for (int i = 0; i < height; i++) {
-    for (int j = 0; j < width; j++) {
-      u16 clr = image[OFFSET(i, j, width)];
-      if (clr != MAGENTA) {
-        setPixel(row + i, col + j, clr);
-      }
-    }
-  }
-}
-
-/*
   Draws a fullscreen image to the video buffer.
   The image passed in must be of size WIDTH * HEIGHT.
   This function can be completed using a single DMA call.
@@ -94,6 +80,14 @@ void drawImageDMA(int row, int col, int width, int height, const u16 *image) {
   }
 }
 
+/*
+  Draws a portion of an image that is clipped off the left side of the screen.
+  You give it the 'global' column of the screen, and the the local column offset
+  for the image. This is used to draw the runway and v2 site.
+
+  I don't think row is a necessary parameter, because you most likely always
+  draw it at zero, but whatever.
+*/
 void drawPartialLeftImage(int row, int screen_col_start, int image_col_start,
                           int width, int height, const u16 *image) {
   int drawWidth = width - image_col_start;
@@ -106,6 +100,15 @@ void drawPartialLeftImage(int row, int screen_col_start, int image_col_start,
     DMA[DMA_CHANNEL_3].cnt = DMA_ON | drawWidth;
   }
 }
+
+/*
+  Draws a portion of an image that is clipped off the right side of the screen.
+  You give it the 'global' column of the screen, and the 'local' end column is
+  calculated internally given the bounds of the screen.
+
+  This probably could have been consolidated with drawPartialLeftImage, but this
+  worked, so I went with it
+*/
 void drawPartialRightImage(int row, int screen_col_start, int width, int height,
                            const u16 *image) {
   int drawWidth = WIDTH - screen_col_start;
@@ -118,6 +121,10 @@ void drawPartialRightImage(int row, int screen_col_start, int width, int height,
   }
 }
 
+/*
+  Draws an image to the full width of the screen and loops it along the columns.
+  the image must be as wide as screen WIDTH * 2 to show the image all the time.
+*/
 void drawLoopingImage(int offset, int width, int height, const u16 *image) {
 
   for (int i = 0; i < height; i++) {

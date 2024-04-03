@@ -8,6 +8,8 @@
 #define STATUSBAR_HEIGHT 20
 #define PAD_SIZE 3
 
+// Helpful macro for the visuals of the distance, used with the display in the
+// top left and the scrolling of the site
 #define DIST_TO_TARGET(X) (TARGET_DIST - (X) / 100)
 
 enum gba_state {
@@ -23,6 +25,9 @@ enum gba_state {
   WAIT_FOR_RESTART_ON_FAIL,
 };
 
+// Holds all state for the game,
+// at this point idk if all of it is used.
+// does not scale but works for a small game like this
 struct game_data {
   int text_flash;
   u32 current_buttons;
@@ -43,23 +48,5 @@ struct game_data {
   int title_text_pos;
   int title_text_dir;
 };
-/*
- * For example, for a Snake game, one could be:
- *
- * struct snake {
- *   int heading;
- *   int length;
- *   int row;
- *   int col;
- * };
- *
- * Example of a struct to hold state machine data:
- *
- * struct state {
- *   int currentState;
- *   int nextState;
- * };
- *
- */
 
 #endif

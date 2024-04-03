@@ -12,8 +12,10 @@
 #include "../images/v2site.h"
 #include "../main.h"
 
+// Used for ground
 #define DISP_DIST(d) ((d) / 10)
 
+// I hate ints for physics...
 #define GRAVITY 5
 #define DRAG 1
 #define MAX_SPEED 100

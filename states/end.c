@@ -23,6 +23,12 @@ enum gba_state draw_losescreen(struct game_data *game) {
   return WAIT_FOR_RESTART;
 }
 
+/*
+  This is an interesting function since it is used by many states,
+  but some have different backgrounds and images, so the color and image also
+  have to be passed in. To keep it using the same state, I just return the
+  current state.
+*/
 enum gba_state wait_for_restart(struct game_data *game, u16 color,
                                 const u16 *image) {
   if (KEY_JUST_PRESSED(BUTTON_SELECT, game->current_buttons,
