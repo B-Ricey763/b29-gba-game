@@ -3,7 +3,7 @@ Reminiscent of the classic flash game, TU-95, B29 Superfotress is a GBA game wit
 
 
 
-![demo vid](https://github.com/user-attachments/assets/ef732721-6d2c-4bfd-b9f4-6fc0fade4c51)
+https://github.com/user-attachments/assets/ef732721-6d2c-4bfd-b9f4-6fc0fade4c51
 
 
 
