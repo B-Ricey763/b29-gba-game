@@ -1,6 +1,8 @@
 # B29 Superfortress 
 Reminiscent of the classic flash game, TU-95, B29 Superfotress is a GBA game with a plane that has to complete a mission or else, FAIL.
 
+![video of game](assets/gba_game_demo.mp4)
+
 ## How to play
 You start on the runway, motionless. Use `Up` to accelerate and then pitch up with `Left`. As a bomber, the takeoff is one of the hardest and most dangerous parts of the mission, so you will probably fail on the first couple attempts. A couple tips:
 - Don't pitch up immediately, it slows you down! Wait until you get up to speed, which happens...
